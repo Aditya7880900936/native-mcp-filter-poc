@@ -22,3 +22,10 @@ services:
     depends_on:
       - weather
       - github
+
+  auth:
+    build:
+      context: ./auth-service
+
+    ports:
+      - "9000:9000"

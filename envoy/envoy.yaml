@@ -28,8 +28,22 @@ static_resources:
                       domains: ["*"]
 
                       routes:
+
                         - match:
                             prefix: "/"
+                            headers:
+                              - name: x-tool-backend
+                                exact_match: github
+
+                          route:
+                            cluster: github_service
+
+                        - match:
+                            prefix: "/"
+                            headers:
+                              - name: x-tool-backend
+                                exact_match: weather
+
                           route:
                             cluster: weather_service
 
@@ -57,12 +71,48 @@ static_resources:
                           )
 
                           if tool ~= nil then
+
                             request_handle:logInfo(
                               "TOOL NAME => " .. tool
                             )
+
+                            if string.find(tool, "github") then
+
+                              request_handle:headers():add(
+                                "x-tool-backend",
+                                "github"
+                              )
+
+                            elseif string.find(tool, "weather") then
+
+                              request_handle:headers():add(
+                                "x-tool-backend",
+                                "weather"
+                              )
+
+                            end
+
                           end
 
                         end
+
+                  - name: envoy.filters.http.ext_authz
+                    typed_config:
+                      "@type": type.googleapis.com/envoy.extensions.filters.http.ext_authz.v3.ExtAuthz
+
+                      http_service:
+
+                        server_uri:
+                          uri: http://auth:9000
+                          cluster: auth_service
+                          timeout: 5s
+
+                        path_prefix: /auth
+
+                        authorization_request:
+                          allowed_headers:
+                            patterns:
+                              - exact: x-tool-backend
 
                   - name: envoy.filters.http.router
                     typed_config:
@@ -99,3 +149,18 @@ static_resources:
                     socket_address:
                       address: github
                       port_value: 8082
+
+    - name: auth_service
+      connect_timeout: 5s
+      type: LOGICAL_DNS
+
+      load_assignment:
+        cluster_name: auth_service
+
+        endpoints:
+          - lb_endpoints:
+              - endpoint:
+                  address:
+                    socket_address:
+                      address: auth
+                      port_value: 9000
