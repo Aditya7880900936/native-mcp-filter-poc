@@ -1,0 +1,24 @@
+services:
+
+  weather:
+    build:
+      context: ./backend-weather
+    ports:
+      - "8081:8081"
+
+  github:
+    build:
+      context: ./backend-github
+    ports:
+      - "8082:8082"
+
+  envoy:
+    build:
+      context: ./envoy
+
+    ports:
+      - "10000:10000"
+
+    depends_on:
+      - weather
+      - github
