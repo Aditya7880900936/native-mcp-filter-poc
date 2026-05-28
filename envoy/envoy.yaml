@@ -28,18 +28,10 @@ static_resources:
                       domains: ["*"]
 
                       routes:
-
                         - match:
-                            prefix: "/weather"
+                            prefix: "/"
                           route:
                             cluster: weather_service
-                            prefix_rewrite: "/"
-
-                        - match:
-                            prefix: "/github"
-                          route:
-                            cluster: github_service
-                            prefix_rewrite: "/"
 
                 http_filters:
 
@@ -55,7 +47,20 @@ static_resources:
                             request_handle:body():length()
                           )
 
-                          request_handle:logInfo(body)
+                          request_handle:logInfo(
+                            "MCP BODY: " .. body
+                          )
+
+                          local tool = string.match(
+                            body,
+                            '"name"%s*:%s*"([^"]+)"'
+                          )
+
+                          if tool ~= nil then
+                            request_handle:logInfo(
+                              "TOOL NAME => " .. tool
+                            )
+                          end
 
                         end
 

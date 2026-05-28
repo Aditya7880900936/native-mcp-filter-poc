@@ -3,6 +3,6 @@
   "id": 1,
   "method": "tools/call",
   "params": {
-    "name": "weather.get"
+    "name": "github.search_repo"
   }
 }
